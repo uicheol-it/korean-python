@@ -104,15 +104,46 @@ def translate_file(
     Path(output_path).write_text(translate(source), encoding="utf-8")
 
 
+def _first_token(source: str) -> str:
+    for token in tokenize.generate_tokens(io.StringIO(source).readline):
+        if token.type not in (tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT):
+            return token.string
+    return ""
+
+
 def run_repl() -> None:
     """Run an interactive shell that translates and executes Korean Python."""
     compiler = codeop.CommandCompiler()
     namespace = {"__name__": "__main__"}
     source_lines = []
+    pending_code = None
+    compound_statements = {
+        "if",
+        "for",
+        "while",
+        "try",
+        "with",
+        "def",
+        "class",
+        "match",
+        "async",
+    }
+    continuation_clauses = {
+        "아니면",
+        "아니면만약",
+        "예외",
+        "마지막으로",
+        "경우",
+        "else",
+        "elif",
+        "except",
+        "finally",
+        "case",
+    }
 
     print("한글 Python 인터프리터입니다. 종료하려면 '종료' 또는 Ctrl+Z를 입력하세요.")
     while True:
-        prompt = "... " if source_lines else "한글>>> "
+        prompt = "... " if source_lines or pending_code is not None else "한글>>> "
         try:
             line = input(prompt)
         except EOFError:
@@ -123,8 +154,25 @@ def run_repl() -> None:
             source_lines.clear()
             continue
 
-        if not source_lines and line.strip() == "종료":
+        if not source_lines and pending_code is None and line.strip() == "종료":
             return
+
+        if pending_code is not None:
+            first_word = line.strip().split(None, 1)[0].rstrip(":") if line.strip() else ""
+            if line.strip() and first_word in continuation_clauses:
+                pending_code = None
+            else:
+                compiled_to_run = pending_code
+                pending_code = None
+                source_lines.clear()
+                try:
+                    exec(compiled_to_run, namespace)
+                except SystemExit:
+                    raise
+                except Exception:
+                    traceback.print_exc()
+                if not line.strip():
+                    continue
 
         source_lines.append(line)
         source = "\n".join(source_lines) + "\n"
@@ -143,6 +191,10 @@ def run_repl() -> None:
             continue
 
         if compiled is None:
+            continue
+
+        if line.strip() and _first_token(translated) in compound_statements:
+            pending_code = compiled
             continue
 
         source_lines.clear()

@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 import keyword
 import unittest
@@ -123,6 +123,30 @@ class TranslateTests(unittest.TestCase):
 
         self.assertIn("3", output.getvalue())
         self.assertNotIn("Traceback", output.getvalue())
+
+    def test_repl_allows_else_after_entering_if_body(self):
+        commands = iter(
+            [
+                "a = 4",
+                "만약 a % 2 == 0:",
+                "    출력('짝수')",
+                "아니면:",
+                "    출력('홀수')",
+                "",
+                "종료",
+            ]
+        )
+        output = StringIO()
+        errors = StringIO()
+
+        with patch("builtins.input", side_effect=lambda _prompt: next(commands)):
+            with redirect_stdout(output):
+                with redirect_stderr(errors):
+                    run_repl()
+
+        self.assertIn("짝수", output.getvalue())
+        self.assertNotIn("홀수", output.getvalue())
+        self.assertNotIn("Traceback", errors.getvalue())
 
 
 if __name__ == "__main__":
