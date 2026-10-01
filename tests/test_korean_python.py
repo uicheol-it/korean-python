@@ -1,14 +1,22 @@
 from contextlib import redirect_stdout
 from io import StringIO
+import keyword
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from korean_python import run_repl, translate, translate_file
+from korean_python import KEYWORD_TRANSLATIONS, run_repl, translate, translate_file
 
 
 class TranslateTests(unittest.TestCase):
+    def test_translation_table_covers_python_keywords(self):
+        translated_keywords = set(KEYWORD_TRANSLATIONS.values())
+        self.assertLessEqual(
+            set(keyword.kwlist) | set(keyword.softkwlist),
+            translated_keywords,
+        )
+
     def test_translates_korean_keywords(self):
         source = "만약 값 안에 목록 그리고 참:\n    반환 없음\n"
         self.assertEqual(
@@ -30,6 +38,29 @@ class TranslateTests(unittest.TestCase):
     def test_translated_source_is_valid_python(self):
         source = "정의 인사(이름):\n    반환 f'안녕, {이름}'\n"
         compile(translate(source), "<translated>", "exec")
+
+    def test_translates_pattern_matching_and_type_alias_syntax(self):
+        source = (
+            "형식 응답 = int\n"
+            "선택 값:\n"
+            "    경우 0:\n"
+            "        결과 = '영'\n"
+            "    경우 무엇이든:\n"
+            "        결과 = '기타'\n"
+        )
+        translated = translate(source)
+        self.assertEqual(
+            translated,
+            "type 응답 = int\n"
+            "match 값:\n"
+            "    case 0:\n"
+            "        결과 = '영'\n"
+            "    case _:\n"
+            "        결과 = '기타'\n",
+        )
+        namespace = {"값": 5}
+        exec(compile(translated, "<translated>", "exec"), namespace)
+        self.assertEqual(namespace["결과"], "기타")
 
     def test_translate_file_reads_and_writes_utf8(self):
         with TemporaryDirectory() as directory:
