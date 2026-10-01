@@ -76,6 +76,31 @@
 | `거짓` | `False` |
 | `없음` | `None` |
 
+## 자주 쓰는 내장 함수와 자료형
+
+| 한글 이름 | Python 이름 |
+|---|---|
+| `출력` | `print` |
+| `입력` | `input` |
+| `범위` | `range` |
+| `길이` | `len` |
+| `정수` | `int` |
+| `실수` | `float` |
+| `문자열` | `str` |
+| `목록` | `list` |
+| `튜플` | `tuple` |
+| `집합` | `set` |
+| `사전` | `dict` |
+| `최댓값` | `max` |
+| `최솟값` | `min` |
+| `합계` | `sum` |
+| `정렬` | `sorted` |
+| `열거` | `enumerate` |
+| `묶음` | `zip` |
+| `절대값` | `abs` |
+| `반올림` | `round` |
+| `거듭제곱` | `pow` |
+
 ## 사용 예
 
 ```python
@@ -96,5 +121,5 @@ def 더하기(a, b):
         return None
 ```
 
-이 표는 `korean_python.py`의 `KEYWORD_TRANSLATIONS` 목록을 기준으로 합니다.
+이 표는 `korean_python.py`의 `KEYWORD_TRANSLATIONS` 목록을 기준으로 합니다. 변환기는 내장 함수와 자료형 이름도 바꾸므로, 해당 한글 이름을 변수나 함수 이름으로 사용하면 안 됩니다.
 `match`/`case` 문과 `type` 별칭 문법은 Python 3.10 이상이 필요하며, `type` 별칭 문법은 Python 3.12 이상이 필요합니다.

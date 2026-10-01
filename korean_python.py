@@ -50,6 +50,26 @@ KEYWORD_TRANSLATIONS = {
     "참": "True",
     "거짓": "False",
     "없음": "None",
+    "출력": "print",
+    "입력": "input",
+    "범위": "range",
+    "길이": "len",
+    "정수": "int",
+    "실수": "float",
+    "문자열": "str",
+    "목록": "list",
+    "튜플": "tuple",
+    "집합": "set",
+    "사전": "dict",
+    "최댓값": "max",
+    "최솟값": "min",
+    "합계": "sum",
+    "정렬": "sorted",
+    "열거": "enumerate",
+    "묶음": "zip",
+    "절대값": "abs",
+    "반올림": "round",
+    "거듭제곱": "pow",
 }
 
 
@@ -111,7 +131,13 @@ def run_repl() -> None:
         try:
             translated = translate(source)
             compiled = compiler(translated, "<한글 입력>", "single")
-        except (IndentationError, SyntaxError, tokenize.TokenError, OverflowError, ValueError):
+        except tokenize.TokenError as error:
+            if error.args and error.args[0] == "unexpected EOF in multi-line statement":
+                continue
+            traceback.print_exc()
+            source_lines.clear()
+            continue
+        except (IndentationError, SyntaxError, OverflowError, ValueError):
             traceback.print_exc()
             source_lines.clear()
             continue
