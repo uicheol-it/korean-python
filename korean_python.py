@@ -1,10 +1,13 @@
 """Translate Korean Python keywords into standard Python source."""
 
 import argparse
+import codeop
 import io
 from pathlib import Path
 import sys
 import tokenize
+import traceback
+from typing import Union
 
 
 KEYWORD_TRANSLATIONS = {
@@ -69,6 +72,58 @@ def translate(source: str) -> str:
     return source
 
 
+def translate_file(
+    input_path: Union[str, Path], output_path: Union[str, Path]
+) -> None:
+    """Translate a UTF-8 source file and write the result as UTF-8."""
+    source = Path(input_path).read_text(encoding="utf-8")
+    Path(output_path).write_text(translate(source), encoding="utf-8")
+
+
+def run_repl() -> None:
+    """Run an interactive shell that translates and executes Korean Python."""
+    compiler = codeop.CommandCompiler()
+    namespace = {"__name__": "__main__"}
+    source_lines = []
+
+    print("한글 Python 인터프리터입니다. 종료하려면 '종료' 또는 Ctrl+Z를 입력하세요.")
+    while True:
+        prompt = "... " if source_lines else "한글>>> "
+        try:
+            line = input(prompt)
+        except EOFError:
+            print()
+            return
+        except KeyboardInterrupt:
+            print("\nKeyboardInterrupt")
+            source_lines.clear()
+            continue
+
+        if not source_lines and line.strip() == "종료":
+            return
+
+        source_lines.append(line)
+        source = "\n".join(source_lines) + "\n"
+        try:
+            translated = translate(source)
+            compiled = compiler(translated, "<한글 입력>", "single")
+        except (IndentationError, SyntaxError, tokenize.TokenError, OverflowError, ValueError):
+            traceback.print_exc()
+            source_lines.clear()
+            continue
+
+        if compiled is None:
+            continue
+
+        source_lines.clear()
+        try:
+            exec(compiled, namespace)
+        except SystemExit:
+            raise
+        except Exception:
+            traceback.print_exc()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description="Translate Korean Python keywords into standard Python."
@@ -83,9 +138,21 @@ def main(argv=None) -> int:
         "--output",
         help="write translated source to this file instead of stdout",
     )
+    parser.add_argument(
+        "--repl",
+        action="store_true",
+        help="run an interactive Korean Python shell",
+    )
     args = parser.parse_args(argv)
 
+    if args.repl:
+        run_repl()
+        return 0
+
     try:
+        if args.input and args.output:
+            translate_file(args.input, args.output)
+            return 0
         source = (
             Path(args.input).read_text(encoding="utf-8")
             if args.input
