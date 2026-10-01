@@ -72,3 +72,5 @@ print(python_source)
 ```
 
 표준 입력과 출력은 UTF-8입니다. 변환은 Python 토큰 단위로 수행하므로 문자열, 주석, 다른 식별자 안의 한글은 그대로 유지됩니다. 지원하는 예약어는 `korean_python.py`의 `KEYWORD_TRANSLATIONS`에서 확인할 수 있습니다.
+
+전체 한글 키워드와 Python 문법의 대응표는 [Python 문법 한글 변환표](KEYWORDS.md)를 참고하세요.
