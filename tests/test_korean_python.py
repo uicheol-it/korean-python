@@ -18,10 +18,30 @@ class TranslateTests(unittest.TestCase):
         )
 
     def test_translates_korean_keywords(self):
-        source = "만약 값 안에 목록 그리고 참:\n    반환 없음\n"
+        source = "만약 값 안에 자료 그리고 참:\n    반환 없음\n"
         self.assertEqual(
             translate(source),
-            "if 값 in 목록 and True:\n    return None\n",
+            "if 값 in 자료 and True:\n    return None\n",
+        )
+
+    def test_translates_common_builtin_names(self):
+        source = (
+            "출력(길이(목록(범위(3))))\n"
+            "출력(합계(묶음(정수('2'), 정수('3'))))\n"
+            "출력(최댓값(1, 2), 최솟값(1, 2), 절대값(-3))\n"
+            "출력(정렬([3, 1]), 반올림(2.6), 거듭제곱(2, 3))\n"
+            "출력(문자열(실수('1.5')), 튜플([1]), 집합([1]), 사전())\n"
+            "출력(입력.__name__, 열거.__name__)\n"
+        )
+        translated = translate(source)
+        self.assertEqual(
+            translated,
+            "print(len(list(range(3))))\n"
+            "print(sum(zip(int('2'), int('3'))))\n"
+            "print(max(1, 2), min(1, 2), abs(-3))\n"
+            "print(sorted([3, 1]), round(2.6), pow(2, 3))\n"
+            "print(str(float('1.5')), tuple([1]), set([1]), dict())\n"
+            "print(input.__name__, enumerate.__name__)\n",
         )
 
     def test_leaves_strings_comments_and_identifiers_unchanged(self):
@@ -92,6 +112,17 @@ class TranslateTests(unittest.TestCase):
                 run_repl()
 
         self.assertIn("5", output.getvalue())
+
+    def test_repl_waits_for_open_parentheses_to_be_closed(self):
+        commands = iter(["출력(", "    1 + 2", ")", "종료"])
+        output = StringIO()
+
+        with patch("builtins.input", side_effect=lambda _prompt: next(commands)):
+            with redirect_stdout(output):
+                run_repl()
+
+        self.assertIn("3", output.getvalue())
+        self.assertNotIn("Traceback", output.getvalue())
 
 
 if __name__ == "__main__":
